@@ -1,4 +1,3 @@
-// src/controllers/recommendations.js
 const axios = require('axios');
 
 // Константы для валидации и автодополнения
@@ -185,66 +184,6 @@ const recommendationsController = {
     });
   },
 
-  // Тестовые фильмы
-  getTestMovies() {
-    return [
-      {
-        id: 535341,
-        name: "1+1",
-        alternativeName: "Intouchables",
-        year: 2011,
-        rating: { kp: 8.8 },
-        votes: { kp: 1123456 },
-        genres: [{ name: "драма" }, { name: "комедия" }, { name: "биография" }],
-        poster: { url: "https://st.kp.yandex.net/images/film_big/535341.jpg" },
-        description: "Пострадав в результате несчастного случая, богатый аристократ Филипп нанимает в помощники человека, который менее всего подходит для этой работы..."
-      },
-      {
-        id: 447301,
-        name: "Начало",
-        alternativeName: "Inception",
-        year: 2010,
-        rating: { kp: 8.7 },
-        votes: { kp: 987654 },
-        genres: [{ name: "фантастика" }, { name: "боевик" }, { name: "триллер" }],
-        poster: { url: "https://st.kp.yandex.net/images/film_big/447301.jpg" },
-        description: "Кобб — талантливый вор, лучший из лучших в опасном искусстве извлечения: он крадет ценные секреты из глубин подсознания во время сна..."
-      },
-      {
-        id: 43395,
-        name: "Темный рыцарь",
-        alternativeName: "The Dark Knight",
-        year: 2008,
-        rating: { kp: 8.5 },
-        votes: { kp: 1234567 },
-        genres: [{ name: "фантастика" }, { name: "боевик" }, { name: "триллер" }, { name: "криминал" }],
-        poster: { url: "https://st.kp.yandex.net/images/film_big/43395.jpg" },
-        description: "Бэтмен поднимает ставки в войне с криминалом. С помощью лейтенанта Джима Гордона и прокурора Харви Дента он намерен очистить улицы от преступности..."
-      },
-      {
-        id: 456,
-        name: "Амели",
-        alternativeName: "Le fabuleux destin d'Amélie Poulain",
-        year: 2001,
-        rating: { kp: 8.1 },
-        votes: { kp: 234567 },
-        genres: [{ name: "мелодрама" }, { name: "комедия" }],
-        poster: { url: "https://st.kp.yandex.net/images/film_big/456.jpg" },
-        description: "Амели — молодая женщина, работающая официанткой в кафе. Она находит старую жестяную коробку с детскими сокровищами..."
-      },
-      {
-        id: 123,
-        name: "Тайна Коко",
-        alternativeName: "Coco",
-        year: 2017,
-        rating: { kp: 8.6 },
-        votes: { kp: 345678 },
-        genres: [{ name: "мультфильм" }, { name: "семейный" }, { name: "приключения" }],
-        poster: { url: "https://st.kp.yandex.net/images/film_big/123.jpg" },
-        description: "12-летний Мигель мечтает стать музыкантом, но его семья запрещает музыку. Он попадает в Страну Мертвых..."
-      }
-    ];
-  },
 
   // История запросов
   getHistory: (req, res) => {
