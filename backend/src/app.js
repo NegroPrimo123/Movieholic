@@ -1,11 +1,13 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const recommendationRoutes = require('./routes/recommendations');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Опции для Swagger
 const swaggerOptions = {
@@ -22,7 +24,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:3000',
+        url: `http://localhost:${PORT}`,
         description: 'Development server'
       }
     ],
@@ -129,19 +131,34 @@ const swaggerOptions = {
       }
     ]
   },
-  apis: ['./src/routes/*.js'] 
+  apis: ['./src/routes/*.js']
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
-// Middleware
+// Middleware безопасности
+app.use(helmet());
 app.use(cors({
-  origin: '*',
+  origin: process.env.CORS_ORIGIN || '*',
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Лимитер запросов
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 минут
+  max: 100, // 100 запросов с одного IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Слишком много запросов. Попробуйте позже.'
+  }
+});
+
+app.use(limiter);
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Маршруты
 app.use('/api/recommendations', recommendationRoutes);
@@ -162,8 +179,38 @@ app.get('/', (req, res) => {
     documentation: '/api-docs',
     endpoints: {
       recommendations: '/api/recommendations',
-      swagger: '/api-docs'
+      swagger: '/api-docs',
+      health: '/health'
     }
+  });
+});
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    database: process.env.DATABASE_URL ? 'configured' : 'not_configured'
+  });
+});
+
+// Обработка 404
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Маршрут не найден'
+  });
+});
+
+// Глобальный обработчик ошибок
+app.use((err, req, res, next) => {
+  console.error('❌ Ошибка сервера:', err.stack);
+  res.status(err.status || 500).json({
+    success: false,
+    error: process.env.NODE_ENV === 'production' 
+      ? 'Внутренняя ошибка сервера' 
+      : err.message
   });
 });
 
@@ -172,4 +219,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);
   console.log(`📚 Документация: http://localhost:${PORT}/api-docs`);
   console.log(`🎬 API: http://localhost:${PORT}/api/recommendations`);
+  console.log(`🏥 Health check: http://localhost:${PORT}/health`);
 });
+
+module.exports = app;
