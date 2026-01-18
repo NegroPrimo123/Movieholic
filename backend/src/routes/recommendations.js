@@ -15,12 +15,13 @@ const recommendationsController = require('../controllers/recommendations');
 router.get('/', (req, res) => {
   res.json({
     message: '🎬 API рекомендаций фильмов',
+    version: '1.0.0',
     documentation: 'Посетите /api-docs для полной документации',
     endpoints: [
       {
         method: 'POST',
         path: '/recommend',
-        description: 'Получить рекомендации фильмов'
+        description: 'Получить рекомендации фильмов по сценарию'
       },
       {
         method: 'GET',
@@ -30,14 +31,20 @@ router.get('/', (req, res) => {
       {
         method: 'GET',
         path: '/history',
-        description: 'Получить историю запросов'
+        description: 'Получить историю запросов (реальную из БД)'
       },
       {
         method: 'GET',
         path: '/stats',
-        description: 'Получить статистику работы сервиса'
+        description: 'Получить статистику работы сервиса (реальную из БД)'
+      },
+      {
+        method: 'GET',
+        path: '/db-test',
+        description: 'Проверить подключение к базе данных'
       }
-    ]
+    ],
+    note: 'Для истории укажите заголовок X-User-ID для идентификации пользователя'
   });
 });
 
@@ -96,11 +103,25 @@ router.post('/recommend', (req, res) => {
  * @swagger
  * /api/recommendations/history:
  *   get:
- *     summary: Получить историю запросов рекомендаций
+ *     summary: Получить историю запросов рекомендаций (реальные данные из БД)
  *     tags: [History]
+ *     parameters:
+ *       - in: header
+ *         name: X-User-ID
+ *         schema:
+ *           type: string
+ *         description: Идентификатор пользователя (опционально)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Количество записей
  *     responses:
  *       200:
  *         description: Успешный ответ с историей
+ *       500:
+ *         description: Ошибка базы данных
  */
 router.get('/history', (req, res) => {
   recommendationsController.getHistory(req, res);
@@ -110,14 +131,35 @@ router.get('/history', (req, res) => {
  * @swagger
  * /api/recommendations/stats:
  *   get:
- *     summary: Получить статистику работы сервиса
+ *     summary: Получить статистику работы сервиса (реальные данные из БД)
  *     tags: [Statistics]
+ *     parameters:
+ *       - in: query
+ *         name: days
+ *         schema:
+ *           type: integer
+ *           default: 30
+ *         description: За какой период считать статистику (в днях)
  *     responses:
  *       200:
  *         description: Успешный ответ со статистикой
  */
 router.get('/stats', (req, res) => {
   recommendationsController.getStats(req, res);
+});
+
+/**
+ * @swagger
+ * /api/recommendations/db-test:
+ *   get:
+ *     summary: Проверить подключение к базе данных
+ *     tags: [Statistics]
+ *     responses:
+ *       200:
+ *         description: Результат проверки подключения
+ */
+router.get('/db-test', (req, res) => {
+  recommendationsController.testDatabase(req, res);
 });
 
 module.exports = router;
