@@ -75,10 +75,9 @@ class RecommendationsController {
   // Получение фильмов из API Кинопоиска
   async fetchMoviesFromAPI(genres, scenario) {
     const API_KEY = process.env.KINOPOISK_API_KEY;
-    
+  
     if (!API_KEY) {
-      console.warn('⚠️ API ключ Кинопоиска не найден');
-      return null;
+      throw new Error('API ключ Кинопоиска не настроен. Установите KINOPOISK_API_KEY в .env');
     }
     
     const BASE_URL = 'https://api.kinopoisk.dev/v1.4/movie';
@@ -141,106 +140,6 @@ class RecommendationsController {
     }
   }
 
-  // Получение резервных фильмов (из кеша или статических данных)
-  async getFallbackMovies(genres) {
-    console.log('🔄 Используем резервные данные');
-    
-    // Здесь можно добавить чтение из кеш-файла
-    // или использовать небольшую локальную базу популярных фильмов
-    
-    const fallbackMovies = [
-      {
-        id: 535341,
-        name: "1+1",
-        alternativeName: "Intouchables",
-        enName: "The Intouchables",
-        year: 2011,
-        rating: { kp: 8.8, imdb: 8.5 },
-        poster: { 
-          url: "https://st.kp.yandex.net/images/film_big/535341.jpg",
-          previewUrl: "https://st.kp.yandex.net/images/film_iphone/iphone360_535341.jpg"
-        },
-        genres: [{ name: "драма" }, { name: "комедия" }, { name: "биография" }],
-        description: "Пострадав в результате несчастного случая, богатый аристократ Филипп нанимает в помощники человека, который менее всего подходит для этой работы — молодого жителя предместья Дрисса, только что освободившегося из тюрьмы.",
-        votes: { kp: 1739467 }
-      },
-      {
-        id: 462682,
-        name: "Волк с Уолл-стрит",
-        alternativeName: "The Wolf of Wall Street",
-        enName: "The Wolf of Wall Street",
-        year: 2013,
-        rating: { kp: 7.9, imdb: 8.2 },
-        poster: { 
-          url: "https://st.kp.yandex.net/images/film_big/462682.jpg",
-          previewUrl: "https://st.kp.yandex.net/images/film_iphone/iphone360_462682.jpg"
-        },
-        genres: [{ name: "драма" }, { name: "комедия" }, { name: "биография" }],
-        description: "1987 год. Джордан Белфорт становится брокером в успешном инвестиционном банке. Вскоре банк закрывается после внезапного обвала индекса Доу-Джонса.",
-        votes: { kp: 1257345 }
-      },
-      {
-        id: 301,
-        name: "Матрица",
-        alternativeName: "The Matrix",
-        enName: "The Matrix",
-        year: 1999,
-        rating: { kp: 8.5, imdb: 8.7 },
-        poster: { 
-          url: "https://st.kp.yandex.net/images/film_big/301.jpg",
-          previewUrl: "https://st.kp.yandex.net/images/film_iphone/iphone360_301.jpg"
-        },
-        genres: [{ name: "фантастика" }, { name: "боевик" }],
-        description: "Жизнь Томаса Андерсона разделена на две части: днём он — самый обычный офисный работник, получающий нагоняи от начальства, а ночью превращается в хакера по имени Нео.",
-        votes: { kp: 987654 }
-      },
-      {
-        id: 435,
-        name: "Зеленая миля",
-        alternativeName: "The Green Mile",
-        enName: "The Green Mile",
-        year: 1999,
-        rating: { kp: 9.1, imdb: 8.6 },
-        poster: { 
-          url: "https://st.kp.yandex.net/images/film_big/435.jpg",
-          previewUrl: "https://st.kp.yandex.net/images/film_iphone/iphone360_435.jpg"
-        },
-        genres: [{ name: "драма" }, { name: "фэнтези" }, { name: "криминал" }],
-        description: "Пол Эджкомб — начальник блока смертников в тюрьме «Холодная гора», каждый из узников которого однажды проходит «зеленую милю» по пути к месту казни.",
-        votes: { kp: 876543 }
-      },
-      {
-        id: 448,
-        name: "Форрест Гамп",
-        alternativeName: "Forrest Gump",
-        enName: "Forrest Gump",
-        year: 1994,
-        rating: { kp: 8.9, imdb: 8.8 },
-        poster: { 
-          url: "https://st.kp.yandex.net/images/film_big/448.jpg",
-          previewUrl: "https://st.kp.yandex.net/images/film_iphone/iphone360_448.jpg"
-        },
-        genres: [{ name: "драма" }, { name: "комедия" }, { name: "мелодрама" }],
-        description: "Сидя на автобусной остановке, Форрест Гамп — не очень умный, но добрый и открытый парень — рассказывает случайным встречным историю своей необыкновенной жизни.",
-        votes: { kp: 765432 }
-      }
-    ];
-    
-    // Фильтрация по жанрам (если указаны)
-    let filteredMovies = fallbackMovies;
-    if (genres.russian.length > 0) {
-      filteredMovies = fallbackMovies.filter(movie => 
-        movie.genres.some(genre => 
-          genres.russian.some(g => 
-            genre.name.toLowerCase().includes(g.toLowerCase())
-          )
-        )
-      );
-    }
-    
-    // Ограничиваем количество
-    return filteredMovies.slice(0, 10);
-  }
 
   // Фильтрация фильмов
   filterMovies(movies, scenario) {

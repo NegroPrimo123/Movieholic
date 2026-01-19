@@ -367,7 +367,6 @@ if (require.main === module) {
     console.log(`🔐 Аутентификация: http://localhost:${PORT}/api/auth/register`);
     console.log(`🎬 API: http://localhost:${PORT}/api/recommendations`);
     console.log(`🏥 Health check: http://localhost:${PORT}/health`);
-    console.log(`\n💡 Генерация секретного ключа: npm run generate:secret`);
   });
 }
 
