@@ -9,18 +9,34 @@ require('dotenv').config();
 // Импорт маршрутов
 const authRoutes = require('./routes/authRoutes');
 const recommendationRoutes = require('./routes/recommendations');
+const friendsRoutes = require('./routes/friendsRoutes'); // НОВОЕ
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Опции для Swagger (обновленные с аутентификацией)
+// Проверка обязательных переменных окружения
+const requiredEnvVars = ['JWT_SECRET', 'JWT_REFRESH_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  console.error('❌ Ошибка: отсутствуют обязательные переменные окружения:');
+  missingEnvVars.forEach(envVar => console.error(`   - ${envVar}`));
+  console.error('💡 Проверьте .env файл');
+  
+  // Проверяем наличие API ключа Кинопоиска
+  if (!process.env.KINOPOISK_API_KEY) {
+    console.warn('⚠️  KINOPOISK_API_KEY не найден. Рекомендации будут возвращать ошибку.');
+  }
+}
+
+// Опции для Swagger (обновленные)
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
       title: '🎬 Movie Recommendation API',
-      version: '2.0.0',
-      description: 'API для получения рекомендаций фильмов с аутентификацией пользователей',
+      version: '3.0.0', // Обновлена версия
+      description: 'API для получения рекомендаций фильмов с аутентификацией пользователей и системой друзей',
       contact: {
         name: 'Movie Recommendation Team',
         email: 'support@movierec.com'
@@ -103,7 +119,6 @@ const swaggerOptions = {
             }
           }
         },
-        // Существующие схемы остаются...
         RecommendationRequest: {
           type: 'object',
           required: ['with_whom', 'when_time', 'purpose'],
@@ -194,6 +209,94 @@ const swaggerOptions = {
               example: ['Некорректный email', 'Пароль слишком короткий']
             }
           }
+        },
+        // НОВЫЕ СХЕМЫ ДЛЯ ДРУЗЕЙ
+        FriendRequest: {
+          type: 'object',
+          properties: {
+            friendship_id: {
+              type: 'integer',
+              example: 1
+            },
+            status: {
+              type: 'string',
+              example: 'pending'
+            },
+            requested_at: {
+              type: 'string',
+              format: 'date-time'
+            },
+            accepted_at: {
+              type: 'string',
+              format: 'date-time'
+            },
+            friend: {
+              $ref: '#/components/schemas/User'
+            }
+          }
+        },
+        SharedMovie: {
+          type: 'object',
+          properties: {
+            movie_id: {
+              type: 'integer',
+              example: 535341
+            },
+            movie_title: {
+              type: 'string',
+              example: '1+1'
+            },
+            movie_poster: {
+              type: 'string',
+              example: 'https://example.com/poster.jpg'
+            },
+            watched_at: {
+              type: 'string',
+              format: 'date-time'
+            },
+            rating: {
+              type: 'integer',
+              example: 9
+            },
+            comment: {
+              type: 'string',
+              example: 'Отличный фильм!'
+            },
+            watched_by: {
+              type: 'string',
+              example: 'я'
+            }
+          }
+        },
+        FriendRecommendation: {
+          type: 'object',
+          properties: {
+            movie_id: {
+              type: 'integer',
+              example: 535341
+            },
+            movie_title: {
+              type: 'string',
+              example: '1+1'
+            },
+            movie_poster: {
+              type: 'string',
+              example: 'https://example.com/poster.jpg'
+            },
+            friend_watch_count: {
+              type: 'integer',
+              example: 3
+            },
+            avg_friend_rating: {
+              type: 'number',
+              example: 8.5
+            },
+            friend_usernames: {
+              type: 'array',
+              items: { type: 'string' },
+              example: ['user1', 'user2']
+            }
+          }
         }
       }
     },
@@ -205,6 +308,10 @@ const swaggerOptions = {
       {
         name: 'Recommendations',
         description: 'Операции с рекомендациями фильмов'
+      },
+      {
+        name: 'Friends',
+        description: 'Управление друзьями и совместными просмотрами' // НОВЫЙ ТЕГ
       },
       {
         name: 'User Profile',
@@ -281,6 +388,7 @@ app.use('/api/', apiLimiter);
 // Маршруты
 app.use('/api/auth', authRoutes);
 app.use('/api/recommendations', recommendationRoutes);
+app.use('/api/friends', friendsRoutes); // НОВЫЙ МАРШРУТ
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
@@ -297,11 +405,11 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   }
 }));
 
-// Главная страница
+// Главная страница (обновленная)
 app.get('/', (req, res) => {
   res.json({
-    message: '🎬 Movie Recommendation API с аутентификацией',
-    version: '2.0.0',
+    message: '🎬 Movie Recommendation API с аутентификацией и системой друзей',
+    version: '3.0.0',
     documentation: '/api-docs',
     endpoints: {
       auth: {
@@ -315,6 +423,13 @@ app.get('/', (req, res) => {
         history: '/api/recommendations/history',
         stats: '/api/recommendations/stats'
       },
+      friends: { // НОВЫЙ БЛОК
+        search: '/api/friends/search',
+        list: '/api/friends',
+        requests: '/api/friends/requests',
+        friendMovies: '/api/friends/{id}/movies',
+        recommendations: '/api/friends/recommendations'
+      },
       documentation: '/api-docs',
       health: '/health'
     },
@@ -322,16 +437,32 @@ app.get('/', (req, res) => {
   });
 });
 
-// Health check
+// Health check (обновленный)
 app.get('/health', (req, res) => {
-  res.json({
+  const healthStatus = {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    database: process.env.DATABASE_URL ? 'configured' : 'not_configured',
-    auth: process.env.JWT_SECRET ? 'configured' : 'not_configured',
-    environment: process.env.NODE_ENV || 'development'
-  });
+    services: {
+      api: 'running',
+      authentication: process.env.JWT_SECRET ? 'configured' : 'not_configured',
+      database: process.env.DB_HOST ? 'configured' : 'not_configured',
+      kinopoisk_api: process.env.KINOPOISK_API_KEY ? 'configured' : 'not_configured'
+    },
+    environment: process.env.NODE_ENV || 'development',
+    version: '3.0.0'
+  };
+  
+  // Проверка наличия таблиц (если есть подключение к БД)
+  if (process.env.DB_HOST) {
+    healthStatus.database_details = {
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      name: process.env.DB_NAME
+    };
+  }
+  
+  res.json(healthStatus);
 });
 
 // Обработка 404
@@ -340,7 +471,14 @@ app.use((req, res) => {
     success: false,
     error: 'Маршрут не найден',
     path: req.path,
-    method: req.method
+    method: req.method,
+    available_endpoints: [
+      '/api/auth/*',
+      '/api/recommendations/*',
+      '/api/friends/*', // НОВЫЙ
+      '/api-docs',
+      '/health'
+    ]
   });
 });
 
@@ -365,8 +503,13 @@ if (require.main === module) {
     console.log(`🚀 Сервер запущен на порту ${PORT}`);
     console.log(`📚 Документация: http://localhost:${PORT}/api-docs`);
     console.log(`🔐 Аутентификация: http://localhost:${PORT}/api/auth/register`);
-    console.log(`🎬 API: http://localhost:${PORT}/api/recommendations`);
+    console.log(`🎬 API рекомендаций: http://localhost:${PORT}/api/recommendations`);
+    console.log(`👥 API друзей: http://localhost:${PORT}/api/friends`); // НОВОЕ
     console.log(`🏥 Health check: http://localhost:${PORT}/health`);
+    console.log(`\n✨ Новая функциональность в v3.0.0:`);
+    console.log(`   • Система друзей и совместных просмотров`);
+    console.log(`   • Рекомендации от друзей`);
+    console.log(`   • Обновленная документация`);
   });
 }
 
