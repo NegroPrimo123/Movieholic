@@ -1,0 +1,80 @@
+/* Кнопка для добавления уведомлений */
+.trigger-btn {
+  padding: 12px 24px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin: 20px;
+  font-size: 16px;
+  transition: background 0.3s;
+}
+
+.trigger-btn:hover {
+  background: #0056b3;
+}
+
+/* Стили для уведомлений */
+.notification-btn {
+  width: 200px;
+  height: 50px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #ddd;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  right: 20px;
+  animation: showAndHide 4s ease forwards;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  transition: transform 0.3s;
+  z-index: 1000;
+}
+
+.notification-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  background: #f8f9fa;
+}
+
+/* Анимация появления и исчезновения */
+@keyframes showAndHide {
+  0% {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100px);
+    visibility: hidden;
+  }
+}
+
+/* Плавное смещение всех уведомлений при добавлении нового */
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(60px);
+  }
+}
+
+.notification-btn.slide-down {
+  animation: showAndHide 4s ease forwards, 
+             slideDown 0.3s ease forwards;
+}
